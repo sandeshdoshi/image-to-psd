@@ -1,4 +1,4 @@
-# Image to PSD
+# PSD Generator
 
 A Python library for processing images and saving layers as PSD files.
 
@@ -34,11 +34,32 @@ pip install image_to_psd
 Here is a basic example of how to use the library:
 
 ```python
-from my_image_processor.processor import process_image
+from image_to_psd.processor import process_image
 
 image_url = "https://example.com/image.jpg"
 result = process_image(image_url, method_type=1, bandwidth=10, is_dynamic=1, num_colors=50)
-print(result)
+```
+
+### Saving Individual Layers
+
+You can also save the individual layers as separate PNG files by setting the `save_layers` parameter to `True`:
+
+```python
+from image_to_psd.processor import process_image
+
+image_url = "https://example.com/image.jpg"
+result = process_image(image_url, method_type=1, bandwidth=10, is_dynamic=1, num_colors=50, save_layers=True)
+```
+
+### Using a Local File
+
+If you want to process a local image file, you can provide the file path instead of a URL:
+
+```python
+from image_to_psd.processor import process_image
+
+image_path = "/path/to/your/local/image.jpg"
+result = process_image(image_path, method_type=1, bandwidth=10, is_dynamic=1, num_colors=50, save_layers=True)
 ```
 
 ## Configuration
@@ -50,6 +71,7 @@ The `process_image` function takes the following parameters:
 - `bandwidth` (int): Bandwidth parameter for MeanShift clustering (used if `method_type` is 1).
 - `is_dynamic` (int): Flag to use dynamic color extraction (1 for dynamic, 0 for predefined).
 - `num_colors` (int): Number of dominant colors to extract (used if `is_dynamic` is 1).
+- `save_layers` (bool): Flag to save individual layers as separate PNG files (default is False).
 
 ## License
 
