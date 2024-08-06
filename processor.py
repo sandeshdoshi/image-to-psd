@@ -9,6 +9,8 @@ from colormath.color_conversions import convert_color
 from colormath.color_diff import delta_e_cie2000
 from wand.image import Image as WandImage
 import urllib.request
+# from .color_printer import *
+from urllib.parse import urlparse
 
 def patch_asscalar(a):
     return a.item()
@@ -117,10 +119,10 @@ def process_image_layers(image_rgb, color_list, bandwidth):
 
     return merged_layers
 
-def save_layers_as_psd(layers, output_path, dpi=300):
+def save_layers_as_psd(layers, output_path, save_individual_layers=False, dpi=300):
     try:
         with WandImage() as psd:
-            for layer in layers:
+            for i, layer in enumerate(layers):
                 img = Image.fromarray(layer, 'RGBA')
                 img_path = f"{get_token()}.png"
                 img.save(img_path)
@@ -135,8 +137,13 @@ def save_layers_as_psd(layers, output_path, dpi=300):
                     psd.sequence.append(img_wand)
                     print(f"Appended image {img_path} to PSD sequence")
 
+                if save_individual_layers:
+                    layer_name = f"Layer_{i}.png"
+                    individual_layer_path = os.path.join('static/temp', f"{layer_name}")
+                    img.save(individual_layer_path)
+                    print(f"Saved individual layer to {individual_layer_path}")
+
                 os.remove(img_path)
-                print(f"Removed image {img_path}")
 
             psd.format = 'psd'
             psd.save(filename=output_path)
@@ -149,11 +156,25 @@ def save_layers_as_psd(layers, output_path, dpi=300):
         raise
 
 
-def process_image(image_path, method_type, bandwidth, is_dynamic, num_colors):
+def process_image(image_path, method_type, bandwidth, is_dynamic, num_colors, save_layers=False):
+    """
+    - `image_path` (str): URL or local path to the image file.
+    - `method_type` (int): Method type for processing (0 for default, 1 for custom).
+    - `bandwidth` (int): Bandwidth parameter for MeanShift clustering (used if `method_type` is 1).
+    - `is_dynamic` (int): Flag to use dynamic color extraction (1 for dynamic, 0 for predefined).
+    - `num_colors` (int): Number of dominant colors to extract (used if `is_dynamic` is 1).
+    - `save_layers` (bool): Flag to save individual layers as separate PNG files (default is False).
+    """
     os.makedirs("psd_files", exist_ok=True)
-    out_path = f"psd_files/mean_shift.psd"
-    img_path, _ = urllib.request.urlretrieve(image_path)
-    # img_path = image_path
+    os.makedirs("static/temp", exist_ok=True)
+    out_path = f"psd_files/{get_token()}.psd"
+
+    # Check if the image_path is a URL or a local file path
+    parsed_url = urlparse(image_path)
+    if parsed_url.scheme in ('http', 'https'):
+        img_path, _ = urllib.request.urlretrieve(image_path)
+    else:
+        img_path = image_path
 
     image = Image.open(img_path).convert('RGB')
     image_rgb = np.array(image)
@@ -165,13 +186,8 @@ def process_image(image_path, method_type, bandwidth, is_dynamic, num_colors):
         color_list = colour_list
 
     if method_type == 0:
-        layer_paths = process_image_layers(image_rgb, color_list, 150)
+        layer_paths = process_image_layers(image_rgb, color_list, 25)
     elif method_type == 1:
         layer_paths = process_image_layers(image_rgb, color_list, bandwidth)
 
-    return save_layers_as_psd(layer_paths, out_path)
-
-# Example usage
-# image = "https://example.jpg"
-# result = process_image(image, method_type=1, bandwidth=10, is_dynamic=1, num_colors=50)
-# print(result)
+    return save_layers_as_psd(layer_paths, out_path, save_individual_layers=save_layers)
