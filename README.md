@@ -26,7 +26,7 @@ Download and install ImageMagick from the [official website](https://imagemagick
 You can install the library using pip:
 
 ```bash
-pip install my_image_processor
+pip install image_to_psd
 ```
 
 ## Usage
