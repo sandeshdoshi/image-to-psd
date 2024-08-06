@@ -1,4 +1,4 @@
-# PSD Generator
+# Image to PSD
 
 A Python library for processing images and saving layers as PSD files.
 
